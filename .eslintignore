@@ -1,0 +1,24 @@
+# Generated files
+src/generated/
+prisma/generated/
+node_modules/
+.next/
+out/
+build/
+
+# Prisma client
+**/prisma/client.js
+**/prisma/client.d.ts
+**/prisma/index.js
+**/prisma/index.d.ts
+**/prisma/runtime/
+**/prisma/wasm.js
+**/prisma/wasm.d.ts
+**/prisma/edge.js
+**/prisma/edge.d.ts
+**/prisma/default.js
+**/prisma/default.d.ts
+**/prisma/index-browser.js
+
+# Build outputs
+*.tsbuildinfo

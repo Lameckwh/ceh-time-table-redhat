@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://54990c405b944cdfcefc4800774fb63da3d601a3a772f08b4048e461099154f8:sk_J77ur_OuZBE_xlaMByC-M@db.prisma.io:5432/?sslmode=require
+      - NEXT_TELEMETRY_DISABLED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Note: Using cloud database, local PostgreSQL service removed
+# volumes:
+#   postgres_data:
+#     driver: local
+
+networks:
+  default:
+    driver: bridge
