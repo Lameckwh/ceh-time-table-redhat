@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect } from "react";
 import { FiInfo, FiX } from "react-icons/fi";
@@ -18,6 +17,8 @@ export default function Home() {
   const [showInfo, setShowInfo] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
   const [openWeek, setOpenWeek] = useState<number | null>(null);
+  const [currentHour, setCurrentHour] = useState(0);
+  const [isMeetingDay, setIsMeetingDay] = useState(false);
 
   // Timetable data (shortened for brevity, expand as needed)
   const timetable = [
@@ -200,25 +201,49 @@ export default function Home() {
       const data = await res.json();
       setFacilitatorIndex(data.index);
     }
+    
     fetchFacilitator();
     setNextMeetingDate(getNextMeetingDateTime());
-    // Show facilitator name at the right time (production logic)
+    
+    // Show facilitator name and select next facilitator at the right time
     const checkTime = () => {
       const now = new Date();
       const catTime = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Harare" }));
       const day = catTime.getDay();
       const hours = catTime.getHours();
+      
+      setCurrentHour(hours);
+      setIsMeetingDay(day === 2 || day === 4);  // Update meeting day state
+
+      // Show facilitator during meeting time (8-9 PM)
       setShowFacilitatorName((day === 2 || day === 4) && hours >= 20 && hours < 21);
+
+      // After 9 PM on meeting days, advance to next facilitator
+      if ((day === 2 || day === 4) && hours >= 21 && !hasAdvancedFacilitator) {
+        fetch('/api/facilitator', { method: 'POST' })
+          .then(res => res.json())
+          .then(data => {
+            setFacilitatorIndex(data.index);
+            hasAdvancedFacilitator = true; // Prevent multiple advances
+          });
+      }
+
+      // Reset the advancement flag at midnight
+      if (hours === 0) {
+        hasAdvancedFacilitator = false;
+      }
+
       // If after 8:15 PM CAT, update next meeting date to the following meeting
       if ((day === 2 || day === 4) && (hours > 20 || (hours === 20 && catTime.getMinutes() >= 15))) {
         setNextMeetingDate(getNextMeetingDateTime());
       }
     };
+    
+    // Add flag to track facilitator advancement
+    let hasAdvancedFacilitator = false;
+    
     checkTime();
-    const interval = setInterval(() => {
-      fetchFacilitator();
-      checkTime();
-    }, 60000);
+    const interval = setInterval(checkTime, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -294,7 +319,16 @@ export default function Home() {
                 {teamMembers[facilitatorIndex]}
               </span>
             ) : (
-              <span className="text-xl text-gray-300 italic">Facilitator will be revealed at 8:00 PM CAT</span>
+              <span className="text-xl text-gray-300 italic">
+                {(() => {
+                  if (!isMeetingDay) {
+                    return "Facilitator will be revealed at 8:00 PM CAT";
+                  }
+                  return currentHour >= 21 
+                    ? "Next meeting's facilitator has been selected"
+                    : "Facilitator will be revealed at 8:00 PM CAT";
+                })()}
+              </span>
             )}
             {/* Next Meeting Info (moved into hero section) */}
             <span className="mt-4 text-base sm:text-lg leading-relaxed text-cyan-200 bg-gray-900/60 rounded px-4 py-2 shadow border border-cyan-700/20">
@@ -386,4 +420,3 @@ export default function Home() {
     </div>
   );
 }
- 

@@ -19,11 +19,27 @@ export async function GET() {
 // POST: Advance to the next facilitator
 export async function POST() {
   const state = await prisma.facilitatorState.findFirst();
+  console.log('Current state:', state);
+  
   const newIndex = state ? (state.index + 1) % TEAM_LENGTH : 0;
+  console.log('New index calculated:', newIndex);
+  
+  let updatedState;
   if (state) {
-    await prisma.facilitatorState.update({ where: { id: state.id }, data: { index: newIndex } });
+    updatedState = await prisma.facilitatorState.update({ 
+      where: { id: state.id }, 
+      data: { index: newIndex }
+    });
   } else {
-    await prisma.facilitatorState.create({ data: { index: newIndex } });
+    updatedState = await prisma.facilitatorState.create({ 
+      data: { index: newIndex }
+    });
   }
-  return NextResponse.json({ index: newIndex });
+  console.log('Updated state:', updatedState);
+  
+  return NextResponse.json({ 
+    index: newIndex,
+    previousIndex: state?.index ?? null,
+    timestamp: new Date().toISOString()
+  });
 }
